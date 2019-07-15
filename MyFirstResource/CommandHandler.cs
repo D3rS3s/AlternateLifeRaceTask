@@ -6,7 +6,7 @@ using AlternateLife.RageMP.Net.Attributes;
 using AlternateLife.RageMP.Net.Enums;
 using System;
 
-namespace MyFirstResource
+namespace RaceGameMode
 {
     public class CommandHandler : ICommandHandler
     {

@@ -6,7 +6,7 @@ using AlternateLife.RageMP.Net.Enums;
 using System.Numerics;
 using System;
 
-namespace MyFirstResource
+namespace RaceGameMode
 {
     public class Race : IResource
     {
@@ -74,7 +74,7 @@ namespace MyFirstResource
             await eventArgs.Player.PutIntoVehicleAsync(vehicle, -1);
             await eventArgs.Player.OutputChatBoxAsync($"Spawned into {eventArgs.Arguments[0].ToString()}");
 
-            await MP.Checkpoints.NewAsync(4, CheckpointList[0], CheckpointList[1], 10, System.Drawing.Color.Yellow, false, 1);
+            await MP.Checkpoints.NewAsync(4, CheckpointList[0], CheckpointList[1], 10, System.Drawing.Color.Yellow, true, 1);
         }
 
         private async Task OnPlayerEnterCheckpoint(object sender, PlayerCheckpointEventArgs eventArgs)

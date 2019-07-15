@@ -6,12 +6,12 @@
   "compilationOptions": {},
   "targets": {
     ".NETCoreApp,Version=v2.2": {
-      "MyFirstResource/1.0.0": {
+      "RaceGameMode/1.0.0": {
         "dependencies": {
           "AlternateLife.RageMP.Net": "1.2.0"
         },
         "runtime": {
-          "MyFirstResource.dll": {}
+          "RaceGameMode.dll": {}
         }
       },
       "AlternateLife.RageMP.Net/1.2.0": {
@@ -45,7 +45,7 @@
     }
   },
   "libraries": {
-    "MyFirstResource/1.0.0": {
+    "RaceGameMode/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

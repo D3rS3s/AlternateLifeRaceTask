@@ -809,9 +809,9 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "D:\\Repositories\\AlternateLifeRaceTask\\MyFirstResource\\MyFirstResource.csproj",
-      "projectName": "MyFirstResource",
-      "projectPath": "D:\\Repositories\\AlternateLifeRaceTask\\MyFirstResource\\MyFirstResource.csproj",
+      "projectUniqueName": "D:\\Repositories\\AlternateLifeRaceTask\\MyFirstResource\\RaceGameMode.csproj",
+      "projectName": "RaceGameMode",
+      "projectPath": "D:\\Repositories\\AlternateLifeRaceTask\\MyFirstResource\\RaceGameMode.csproj",
       "packagesPath": "C:\\Users\\woell\\.nuget\\packages\\",
       "outputPath": "D:\\Repositories\\AlternateLifeRaceTask\\MyFirstResource\\obj\\",
       "projectStyle": "PackageReference",

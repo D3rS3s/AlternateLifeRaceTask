@@ -1,0 +1,8 @@
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\bin\Release\netcoreapp2.2\RaceGameMode.deps.json
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\bin\Release\netcoreapp2.2\RaceGameMode.dll
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\bin\Release\netcoreapp2.2\RaceGameMode.pdb
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Release\netcoreapp2.2\RaceGameMode.csproj.CoreCompileInputs.cache
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Release\netcoreapp2.2\RaceGameMode.AssemblyInfoInputs.cache
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Release\netcoreapp2.2\RaceGameMode.AssemblyInfo.cs
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Release\netcoreapp2.2\RaceGameMode.dll
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Release\netcoreapp2.2\RaceGameMode.pdb
