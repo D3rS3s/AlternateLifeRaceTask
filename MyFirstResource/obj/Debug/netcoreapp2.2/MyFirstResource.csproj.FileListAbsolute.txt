@@ -1,0 +1,9 @@
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\bin\Debug\netcoreapp2.2\MyFirstResource.deps.json
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\bin\Debug\netcoreapp2.2\MyFirstResource.dll
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\bin\Debug\netcoreapp2.2\MyFirstResource.pdb
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Debug\netcoreapp2.2\MyFirstResource.csprojAssemblyReference.cache
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Debug\netcoreapp2.2\MyFirstResource.csproj.CoreCompileInputs.cache
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Debug\netcoreapp2.2\MyFirstResource.AssemblyInfoInputs.cache
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Debug\netcoreapp2.2\MyFirstResource.AssemblyInfo.cs
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Debug\netcoreapp2.2\MyFirstResource.dll
+D:\Repositories\AlternateLifeRaceTask\MyFirstResource\obj\Debug\netcoreapp2.2\MyFirstResource.pdb
