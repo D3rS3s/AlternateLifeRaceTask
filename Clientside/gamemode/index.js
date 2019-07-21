@@ -40,10 +40,13 @@ mp.events.add('setClientCheckpoint', (type, position, direction) => {
 })
 
 mp.events.add("playerEnterCheckpoint",(checkpoint) => {
-    mp.events.callRemote('PLAYER_PASSED_CHECKPOINT', checkpoint.position);    
+    mp.events.callRemote('PLAYER_PASSED_CHECKPOINT', checkpoint.position.x, checkpoint.position.y, checkpoint.position.z);    
 });
 
 mp.events.add("destroyActiveCheckpoint", () => {
-    currentCheckpoint.destroy();
-    currentCheckpoint = null;
+    if(currentCheckpoint!= null)
+    {
+        currentCheckpoint.destroy();
+        currentCheckpoint = null;
+    }
 });

@@ -120,7 +120,10 @@ namespace RaceGameMode
                     passedCheckpointsFromServer = Convert.ToInt32(passedCheckpointsFromServerObj);
                 }
 
-                    await player.OutputChatBoxAsync($"Checkpoint { passedCheckpointsFromServer } passed");
+                await player.OutputChatBoxAsync($"Validating checkpoint {passedCheckpointsFromServer}: {validatePassedCheckpoint(passedCheckpointsFromServer, new Vector3((float)eventArgs.Arguments[0], (float)eventArgs.Arguments[1], (float)eventArgs.Arguments[2]))}");
+                if (validatePassedCheckpoint(passedCheckpointsFromServer, new Vector3((float) eventArgs.Arguments[0], (float)eventArgs.Arguments[1], (float)eventArgs.Arguments[2])))
+                {
+                    await player.OutputChatBoxAsync($"Checkpoint { passedCheckpointsFromServer } passed and validated");
                     int finish = CheckpointList.Length;
                     if (passedCheckpointsFromServer == 0)
                     {
@@ -154,16 +157,28 @@ namespace RaceGameMode
                         await eventArgs.Player.CallAsync("setClientCheckpoint", 1, CheckpointList[passedCheckpointsFromServer], CheckpointList[passedCheckpointsFromServer + 1]);
                     }
                     player.SetData("passedCheckpoints", passedCheckpointsFromServer);
-
+                }
+                else
+                {
+                    await player.OutputChatBoxAsync($"Checkpoint position differs from expected position -> race aborting");
+                    await endRace();
+                }
             }
 
         }
 
         private Boolean validatePassedCheckpoint(int playerPassedCheckpoints, Vector3 checkpointPosition)
         {
-            if(CheckpointList[playerPassedCheckpoints] == checkpointPosition)
+            if(playerPassedCheckpoints <= CheckpointList.Length)
             {
-                return true;
+                if(CheckpointList[playerPassedCheckpoints] == checkpointPosition)
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
             }
             else
             {
@@ -175,6 +190,7 @@ namespace RaceGameMode
         {
             PlayerList.ForEach(async delegate (IPlayer racePlayer)
             {
+                await racePlayer.CallAsync("destroyActiveCheckpoint");
                 await racePlayer.OutputChatBoxAsync("Race finished");
                 IVehicle vehicle = await racePlayer.GetVehicleAsync();
                 await vehicle.DestroyAsync();
