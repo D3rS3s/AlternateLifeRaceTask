@@ -29,14 +29,18 @@ namespace RaceGameMode
         private uint[] CarsAvaiable = { (uint)VehicleHash.T20, (uint)VehicleHash.Issi6, (uint)VehicleHash.Bf400 };
 
         private List<IPlayer> PlayerList = new List<IPlayer>();
-        private int PlayerReady = 0;
-        private int PlayerFinished = 0;
+        private uint PlayerReady = 0;
+        private uint PlayerFinished = 0;
         private Boolean RaceActive = false;
+        private const uint MAX_PLAYERS = 4;
+        private System.Timers.Timer countdown;
+        private uint startTimerCount = 4;
 
         public Race()
         { 
             MP.Events.Add("PLAYER_RACE_CAR_SELECTED", OnPlayerSelectCarForRace);
             MP.Events.Add("PLAYER_PASSED_CHECKPOINT", OnPlayerPassedCheckpoint);
+            MP.Events.Add("PLAYER_CAR_SELECT_CANCELED", OnPlayerCarSelectCanceled);
 
             //Set Marker in which race can be started
             Vector3 pos = new Vector3((float)1683.09, (float)3261.494, (float)39.70709);
@@ -44,6 +48,7 @@ namespace RaceGameMode
             RaceStartColshape.SetData("id", "RaceStartMarker");
             RaceStartMarker = MP.Markers.New(MarkerType.VerticalCylinder, pos, new Vector3(0, 0, 0), new Vector3(0, 0, 1), 1, System.Drawing.Color.Yellow, true, 1);
             MP.Events.PlayerEnterColshape += OnPlayerEnterRaceStartColshape;
+            MP.Events.PlayerStartExitVehicle += OnPlayerExitRaceVehicle;
         }
 
         private async Task OnPlayerEnterRaceStartColshape(object sender, PlayerColshapeEventArgs eventArgs)
@@ -56,35 +61,73 @@ namespace RaceGameMode
                 {
                     if (colshape.ToString() == "RaceStartMarker")
                     {
+                        //first add player that started the race to playerList and then get all players in range and add them
+                        await player.CallAsync("destroyActiveCheckpoint");
+                        if (PlayerList.Count() > 0)
+                        {
+                            PlayerList = new List<IPlayer>();
+                        }
                         PlayerList.Add(player);
+
                         IReadOnlyCollection<IPlayer> playersInRange = await MP.Players.GetInRangeAsync(await player.GetPositionAsync(), 50, 1);
                         if (playersInRange != null)
                         {
                             foreach (IPlayer playerInRange in playersInRange)
                             {
-                                PlayerList.Add(playerInRange);
+                                //only allow up to MAX_PLAYERS player to join race
+                                if(PlayerList.Count() < MAX_PLAYERS)
+                                {
+                                    PlayerList.Add(playerInRange);
+                                }
+                                else
+                                {
+                                    await playerInRange.OutputChatBoxAsync($"Sorry, race full");
+                                }
                             }
                         }
 
+                        //tell every client to show the car select menu
                         PlayerList.ForEach(async delegate (IPlayer racePlayer)
                         {
+                            racePlayer.SetData("passedCheckpoints", 0);
                             await racePlayer.CallAsync("showCarSelectMenu");
 
                         });
                     }
-                    RaceActive = true;
+                }
+            }
+        }
+
+        private async Task OnPlayerCarSelectCanceled(object sender, PlayerRemoteEventEventArgs eventArgs)
+        {
+            if(RaceActive)
+            {
+                IPlayer player = eventArgs.Player;
+                object hasPlayerSelectedCar;
+                player.TryGetData("hasPlayerSelectedCar", out hasPlayerSelectedCar);
+                await player.OutputChatBoxAsync($"hasPlayerSelectedCar: { (bool)hasPlayerSelectedCar }");
+                if (!(bool)hasPlayerSelectedCar)
+                {
+                    await player.OutputChatBoxAsync("Car select canceled, removed from race");
+                    if(PlayerList.Contains(player))
+                    {
+                        PlayerList.Remove(player);
+                    }
+                    await checkStartRace();
                 }
             }
         }
 
         private async Task OnPlayerSelectCarForRace(object sender, PlayerRemoteEventEventArgs eventArgs)
         {
+            RaceActive = true;
             //First check if player is in the race and validate if selected car is allowed
-            //
             IPlayer player = eventArgs.Player;
+            await player.OutputChatBoxAsync($"car selected: {PlayerList.Contains(player)}");
             uint selectedVehicleHash = MP.Utility.Joaat(eventArgs.Arguments[0].ToString());
             if (PlayerList.Contains(player) && CarsAvaiable.Contains(selectedVehicleHash))
             {
+                //TODO: freeze vehicle till countdown finished
                 IVehicle vehicle = await MP.Vehicles.NewAsync(selectedVehicleHash, StartPositions[PlayerReady]);
                 await vehicle.SetDimensionAsync(1);
                 await vehicle.SetRotationAsync(new Vector3(0, 0, 100));
@@ -93,26 +136,16 @@ namespace RaceGameMode
                 await player.CallAsync("setClientCheckpoint", 4, CheckpointList[0], CheckpointList[1], 0);
                 PlayerReady++;
             }
-
-
-            //if last player is ready, start race
-            if(PlayerReady == PlayerList.Count())
-            {
-                PlayerList.ForEach(async delegate (IPlayer racePlayer)
-                {
-                    await racePlayer.OutputChatBoxAsync($"Race Start!!");
-                });
-                //TODO: Start Race
-            }
-
+            await checkStartRace();
         }
 
         private async Task OnPlayerPassedCheckpoint(object sender, PlayerRemoteEventEventArgs eventArgs)
         {
             IPlayer player = eventArgs.Player;
+            //validate that player is in the race
             if(PlayerList.Contains(player))
             {
-                await player.OutputChatBoxAsync($"Player {player.GetName()} passed");
+                //get how many checkpoints the player already passed -> saved in playerData
                 int passedCheckpointsFromServer = 0;
                 object passedCheckpointsFromServerObj;
                 if (player.TryGetData("passedCheckpoints", out passedCheckpointsFromServerObj))
@@ -120,19 +153,15 @@ namespace RaceGameMode
                     passedCheckpointsFromServer = Convert.ToInt32(passedCheckpointsFromServerObj);
                 }
 
-                await player.OutputChatBoxAsync($"Validating checkpoint {passedCheckpointsFromServer}: {validatePassedCheckpoint(passedCheckpointsFromServer, new Vector3((float)eventArgs.Arguments[0], (float)eventArgs.Arguments[1], (float)eventArgs.Arguments[2]))}");
+                //validate if checkpoint from client is at the same position that server expects
                 if (validatePassedCheckpoint(passedCheckpointsFromServer, new Vector3((float) eventArgs.Arguments[0], (float)eventArgs.Arguments[1], (float)eventArgs.Arguments[2])))
                 {
                     await player.OutputChatBoxAsync($"Checkpoint { passedCheckpointsFromServer } passed and validated");
+                           
                     int finish = CheckpointList.Length;
-                    if (passedCheckpointsFromServer == 0)
-                    {
-                        await eventArgs.Player.OutputChatBoxAsync("Race started");
-                        eventArgs.Player.SetData("RaceStarted", DateTime.Now);
-                    }
-
                     passedCheckpointsFromServer++;
 
+                    //Check if passed checkpoint is last one -> racefinished for particular player
                     if (passedCheckpointsFromServer == finish)
                     {
                         await eventArgs.Player.CallAsync("destroyActiveCheckpoint");
@@ -141,13 +170,14 @@ namespace RaceGameMode
                         eventArgs.Player.TryGetData("RaceStarted", out startT);
                         DateTime startTime;
                         DateTime.TryParse(startT.ToString(), out startTime);
-                        await eventArgs.Player.OutputChatBoxAsync($"Your finish position: {PlayerFinished++}");
+                        await eventArgs.Player.OutputChatBoxAsync($"Your finish position: {++PlayerFinished}");
                         await eventArgs.Player.OutputChatBoxAsync($"Your time: {finishTime.Subtract(startTime).ToString()}");
                         if(PlayerFinished == PlayerList.Count())
                         {
                             await endRace();
                         }
                     }
+                    // check if next checkpoint is last one -> display finishline
                     else if (passedCheckpointsFromServer == finish - 1)
                     {
                         await eventArgs.Player.CallAsync("setClientCheckpoint", 4, CheckpointList[passedCheckpointsFromServer], new Vector3());
@@ -158,6 +188,7 @@ namespace RaceGameMode
                     }
                     player.SetData("passedCheckpoints", passedCheckpointsFromServer);
                 }
+                //if checkpoint differs from expected checkpoint -> end the race
                 else
                 {
                     await player.OutputChatBoxAsync($"Checkpoint position differs from expected position -> race aborting");
@@ -186,7 +217,20 @@ namespace RaceGameMode
             }
         }
 
-        private async Task endRace()
+        private Task checkStartRace()
+        {
+            if (PlayerReady == PlayerList.Count())
+            {
+                //Start Countdowntimer
+                countdown = new System.Timers.Timer(1000);
+                countdown.Elapsed += startCountdownEvent;
+                countdown.AutoReset = true;
+                countdown.Enabled = true;
+            }
+            return Task.CompletedTask;
+        }
+
+        private Task endRace()
         {
             PlayerList.ForEach(async delegate (IPlayer racePlayer)
             {
@@ -200,6 +244,51 @@ namespace RaceGameMode
             PlayerFinished = 0;
             PlayerList = new List<IPlayer>();
             RaceActive = false;
+            return Task.CompletedTask;
+        }
+
+        private async Task OnPlayerExitRaceVehicle(object sender, PlayerVehicleEventArgs eventArgs)
+        {
+            if(RaceActive)
+            {
+                IPlayer player = eventArgs.Player;
+                IVehicle vehicle = eventArgs.Vehicle;
+                await player.OutputChatBoxAsync($"Player exited Vehicle, removed from race");
+                await vehicle.DestroyAsync();
+                await player.CallAsync("destroyActiveCheckpoint");
+                if (PlayerList.Contains(player))
+                {
+                    PlayerList.Remove(player);
+                }
+                if (PlayerList.Count() == 0)
+                {
+                    await endRace();
+                }
+            }
+        }
+
+        private void startCountdownEvent(object sender, EventArgs e)
+        {
+            startTimerCount--;
+            PlayerList.ForEach(async delegate (IPlayer racePlayer)
+            {
+                if(startTimerCount > 0)
+                {
+                    await racePlayer.OutputChatBoxAsync($"Start in {startTimerCount}");
+                }
+                else
+                {
+                    //TODO: unfreeze vehicles
+                    await racePlayer.OutputChatBoxAsync($"GO!");
+                    racePlayer.SetData("RaceStarted", DateTime.Now);
+                }
+            });
+            if(startTimerCount == 0)
+            {
+                startTimerCount = 4;
+                countdown.Stop();
+                countdown.Dispose();
+            }
         }
     }
 }
